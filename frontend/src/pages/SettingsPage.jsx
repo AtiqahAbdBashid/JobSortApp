@@ -26,11 +26,10 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
 const SettingsPage = ({ darkMode, setDarkMode }) => {
-    const theme = useTheme();  // ← ADD THIS
+
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-    const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
