@@ -84,7 +84,7 @@ const TermsOfService = () => {
                                 For questions about these terms, please contact us at:
                             </Typography>
                             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                                <strong>Email:</strong> support@jobsort.com
+                                <strong>Email:</strong> atiqahabdbashid@gmail.com
                             </Typography>
                         </Section>
                     </Box>

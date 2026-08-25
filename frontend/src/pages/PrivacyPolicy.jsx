@@ -74,7 +74,7 @@ const PrivacyPolicy = () => {
                                 If you have any questions about this privacy policy, please contact us at:
                             </Typography>
                             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                                <strong>Email:</strong> support@jobsort.com
+                                <strong>Email:</strong> atiqahabdbashid@gmail.com
                             </Typography>
                         </Section>
                     </Box>
