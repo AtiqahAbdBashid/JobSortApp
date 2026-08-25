@@ -1002,8 +1002,9 @@ const LandingPage = () => {
             </Box>
 
             {/* =========================================================
-                FOOTER
-            ========================================================= */}
+    FOOTER
+========================================================= */}
+
             <Box
                 sx={{
                     py: 4,
@@ -1023,21 +1024,16 @@ const LandingPage = () => {
                     >
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                             <Box
+                                component="img"
+                                src="/logo.png"
+                                alt="JobSort"
                                 sx={{
                                     width: 28,
                                     height: 28,
                                     borderRadius: '8px',
-                                    bgcolor: '#0A84FF',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: '#FFFFFF',
-                                    fontWeight: 700,
-                                    fontSize: 12,
+                                    objectFit: 'contain',
                                 }}
-                            >
-                                JS
-                            </Box>
+                            />
                             <Typography
                                 variant="caption"
                                 sx={{
@@ -1067,6 +1063,7 @@ const LandingPage = () => {
                                     cursor: 'pointer',
                                     '&:hover': { color: '#F5F5F7' },
                                 }}
+                                onClick={() => navigate('/privacy')}
                             >
                                 Privacy
                             </Typography>
@@ -1077,6 +1074,7 @@ const LandingPage = () => {
                                     cursor: 'pointer',
                                     '&:hover': { color: '#F5F5F7' },
                                 }}
+                                onClick={() => navigate('/terms')}
                             >
                                 Terms
                             </Typography>
