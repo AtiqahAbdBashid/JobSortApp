@@ -14,6 +14,8 @@ import ApplicationGrid from './components/Applications/ApplicationGrid';
 import Login from './pages/Login';
 import LandingPage from './pages/LandingPage';
 import SettingsPage from './pages/SettingsPage';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 
 // ============================================================
 // AUTH CALLBACK COMPONENT
@@ -113,6 +115,12 @@ function App() {
                             <Login />
                         </PublicRoute>
                     } />
+
+                    {/* Privacy Policy */}
+                    <Route path="/privacy" element={<PrivacyPolicy />} />
+
+                    {/* Terms of Service */}
+                    <Route path="/terms" element={<TermsOfService />} />
 
                     {/* Auth Callback */}
                     <Route path="/auth-callback" element={<AuthCallback />} />
