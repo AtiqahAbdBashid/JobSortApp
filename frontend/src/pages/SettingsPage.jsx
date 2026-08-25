@@ -29,6 +29,7 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
 
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const [loading, setLoading] = useState(false);
 
     const [saving, setSaving] = useState(false);
     const [success, setSuccess] = useState('');

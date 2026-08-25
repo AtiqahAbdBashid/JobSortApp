@@ -2,6 +2,18 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
+    Box,
+    Container,
+    Typography,
+    Button,
+    Grid,
+    Card,
+    CardContent,
+    Avatar,
+    useTheme,
+    IconButton,
+} from '@mui/material';
+import {
     Work as WorkIcon,
     Search as SearchIcon,
     Timeline as TimelineIcon,

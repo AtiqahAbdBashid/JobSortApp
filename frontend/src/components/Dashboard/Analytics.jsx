@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
+import { useTheme } from '@mui/material/styles';
 import {
     Box,
     Paper,
@@ -34,7 +34,7 @@ import {
 import api from '../../services/api';
 
 const Analytics = ({ darkMode }) => {
-
+    const theme = useTheme();
     const [analyticsData, setAnalyticsData] = useState({
         statusDistribution: [],
         monthlyTrend: [],
