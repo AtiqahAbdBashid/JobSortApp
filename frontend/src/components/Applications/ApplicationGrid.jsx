@@ -2180,7 +2180,7 @@ const ApplicationGrid = ({ darkMode }) => {
                             What will happen:
                         </Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                            • Scan your Gmail for job application emails between {syncStartDate} and {syncEndDate}
+                            • Scan Gmail for job application emails from {syncStartDate} to {syncEndDate}
                             <br />
                             • Extract company name, position, and status
                             <br />
