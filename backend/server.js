@@ -6,24 +6,37 @@ const bodyParser = require('body-parser');
 
 const authRoutes = require('./routes/auth');
 const applicationRoutes = require('./routes/applications');
-const userRoutes = require('./routes/users');  // ← ADD THIS
+const userRoutes = require('./routes/users');
 
 const app = express();
 
-// Middleware
+// ============================================================
+// ✅ FIXED CORS - Added your production domains!
+// ============================================================
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    origin: [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://127.0.0.1:3000',
+        'https://jobsortapp.online',
+        'https://jobsortapp.vercel.app',
+        'https://jobsort-backend.onrender.com'
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
+
+// ✅ Handle preflight requests
+app.options('*', cors());
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/applications', applicationRoutes);
-app.use('/api/users', userRoutes);  // ← ADD THIS
+app.use('/api/users', userRoutes);
 
 // Test route
 app.get('/api/test', (req, res) => {
