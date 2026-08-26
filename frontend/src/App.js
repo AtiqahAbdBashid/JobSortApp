@@ -7,6 +7,11 @@ import {
     useNavigate
 } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
+import {
+    Box,
+    Typography,
+    CircularProgress,
+} from '@mui/material';
 import getTheme from './styles/theme';
 import Layout from './components/Layout/Layout';
 import Analytics from './components/Dashboard/Analytics';
@@ -22,6 +27,7 @@ import TermsOfService from './pages/TermsOfService';
 // ============================================================
 const AuthCallback = () => {
     const navigate = useNavigate();
+    const [syncMessage, setSyncMessage] = useState('Loading your dashboard...');
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -29,19 +35,21 @@ const AuthCallback = () => {
 
         if (token) {
             localStorage.setItem('token', token);
+            setSyncMessage('Verifying your account...');
 
-            // Step 1: Get user info
             fetch('https://jobsort-backend.onrender.com/api/auth/me', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             })
-                .then(res => res.json())
+                .then(res => {
+                    if (!res.ok) throw new Error('Failed to fetch user');
+                    return res.json();
+                })
                 .then(user => {
                     localStorage.setItem('user', JSON.stringify(user));
+                    setSyncMessage('Syncing your Gmail...');
 
-                    // Step 2: Auto-sync Gmail after login
-                    console.log('🔄 Auto-syncing Gmail...');
                     return fetch('https://jobsort-backend.onrender.com/api/applications/sync-gmail', {
                         method: 'POST',
                         headers: {
@@ -56,19 +64,59 @@ const AuthCallback = () => {
                 .then(res => res.json())
                 .then(data => {
                     console.log('Auto-sync completed:', data);
-                    navigate('/dashboard');
+                    setSyncMessage('Almost ready...');
+                    setTimeout(() => navigate('/dashboard'), 500);
                 })
                 .catch((err) => {
-                    console.error('Error during auto-sync:', err);
-                    // Still navigate to dashboard even if sync fails
-                    navigate('/dashboard');
+                    console.error('Error:', err);
+                    setSyncMessage('Something went wrong, redirecting...');
+                    setTimeout(() => navigate('/dashboard'), 1000);
                 });
         } else {
             navigate('/login');
         }
     }, [navigate]);
 
-    return <div>Logging in to JobSort...</div>;
+    return (
+        <Box sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100vh',
+            bgcolor: '#1C1C1E',
+            p: 3,
+        }}>
+            <Box sx={{ textAlign: 'center' }}>
+                {/* Logo */}
+                <Box
+                    component="img"
+                    src="/logo.png"
+                    alt="JobSort"
+                    sx={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: '16px',
+                        mb: 3,
+                        objectFit: 'contain',
+                    }}
+                />
+
+                {/* Title */}
+                <Typography variant="h4" sx={{ color: '#F5F5F7', fontWeight: 700, mb: 2 }}>
+                    JobSort
+                </Typography>
+
+                {/* Loading Spinner */}
+                <CircularProgress size={40} sx={{ color: '#0A84FF', mb: 2 }} />
+
+                {/* Status Messages */}
+                <Typography variant="body2" sx={{ color: '#98989D' }}>
+                    {syncMessage}
+                </Typography>
+            </Box>
+        </Box>
+    );
 };
 
 // ============================================================
