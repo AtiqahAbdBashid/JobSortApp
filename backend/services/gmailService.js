@@ -247,16 +247,32 @@ class GmailService {
     // ============================================================
     async syncEmails(userId, startDate = null, endDate = null, override = false) {
         try {
-            const user = await User.findById(userId);
-            if (!user) throw new Error('User not found');
+            console.log('========== SYNC EMAILS START ==========');
+            console.log('userId:', userId);
+            console.log('startDate:', startDate);
+            console.log('endDate:', endDate);
+            console.log('override:', override);
 
-            console.log(`\n👤 Syncing Gmail for: ${user.email}`);
-            console.log(`Has access token: ${!!user.accessToken}`);
-            console.log(`Has refresh token: ${!!user.refreshToken}`);
-            onsole.log(`🔄 Override flag received: ${override}`);
-            // Set default dates
-            const startDateObj = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-            const endDateObj = endDate ? new Date(endDate) : new Date();
+            // ✅ Validate dates
+            let startDateObj, endDateObj;
+
+            if (startDate) {
+                startDateObj = new Date(startDate);
+                if (isNaN(startDateObj.getTime())) {
+                    throw new Error(`Invalid start date: ${startDate}`);
+                }
+            } else {
+                startDateObj = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+            }
+
+            if (endDate) {
+                endDateObj = new Date(endDate);
+                if (isNaN(endDateObj.getTime())) {
+                    throw new Error(`Invalid end date: ${endDate}`);
+                }
+            } else {
+                endDateObj = new Date();
+            }
 
             console.log(`Syncing emails from ${startDateObj.toISOString().split('T')[0]} to ${endDateObj.toISOString().split('T')[0]}`);
 
@@ -264,6 +280,12 @@ class GmailService {
             if (override) {
                 const deleted = await Application.deleteMany({ userId });
                 console.log(`🗑️ Deleted ${deleted.deletedCount} existing applications`);
+            }
+
+            // ✅ CONTINUE WITH THE REST OF YOUR CODE
+            const user = await User.findById(userId);
+            if (!user) {
+                throw new Error('User not found');
             }
 
             const emails = await this.fetchJobApplications(user, startDateObj, endDateObj);
@@ -284,10 +306,6 @@ class GmailService {
                 }
 
                 if (existing) {
-                    // ============================================================
-                    // ✅ UPDATE EXISTING APPLICATION WITH ENHANCED TRACKING
-                    // ============================================================
-
                     // Add to status history
                     existing.statusHistory.push({
                         status: email.status,
@@ -305,12 +323,10 @@ class GmailService {
                         emailId: email.emailId
                     });
 
-                    // Update the main status
                     existing.status = email.status;
                     existing.lastUpdated = new Date();
                     existing.lastEmailDate = new Date(email.date);
 
-                    // If email thread ID doesn't match, update it
                     if (!existing.emailThreadId) {
                         existing.emailThreadId = email.threadId;
                     }
@@ -319,13 +335,9 @@ class GmailService {
                     updated++;
                     followUpsProcessed++;
 
-                    console.log(`🔄 Updated: ${email.company} - ${email.position} → ${email.status} (${existing.statusHistory.length} status changes)`);
+                    console.log(`🔄 Updated: ${email.company} - ${email.position} → ${email.status}`);
 
                 } else {
-                    // ============================================================
-                    // ✅ CREATE NEW APPLICATION WITH ENHANCED TRACKING
-                    // ============================================================
-
                     const application = new Application({
                         userId,
                         company: email.company,
@@ -336,16 +348,12 @@ class GmailService {
                         lastEmailDate: new Date(email.date),
                         source: 'Email',
                         emailThreadId: email.threadId,
-
-                        // Initialize status history
                         statusHistory: [{
                             status: email.status,
                             date: new Date(email.date),
                             source: 'Email',
                             note: `Initial email: ${email.subject}`
                         }],
-
-                        // Initialize follow-up emails
                         followUpEmails: [{
                             subject: email.subject,
                             status: email.status,
@@ -358,11 +366,11 @@ class GmailService {
                     await application.save();
                     synced++;
 
-                    console.log(`Created: ${email.company} - ${email.position} (${email.status})`);
+                    console.log(`✅ Created: ${email.company} - ${email.position} (${email.status})`);
                 }
             }
 
-            console.log(`\nSync complete:`);
+            console.log(`\n✅ Sync complete:`);
             console.log(`   New applications: ${synced}`);
             console.log(`   Updated applications: ${updated}`);
             console.log(`   Follow-ups processed: ${followUpsProcessed}`);
@@ -370,9 +378,7 @@ class GmailService {
 
             return {
                 success: true,
-                message: override
-                    ? `Replaced all data with ${synced} new applications`
-                    : `Synced ${synced} new applications, updated ${updated} existing, ${followUpsProcessed} follow-ups processed`,
+                message: `Synced ${synced} new applications, updated ${updated} existing, ${followUpsProcessed} follow-ups processed`,
                 synced,
                 updated,
                 followUpsProcessed,
@@ -381,9 +387,10 @@ class GmailService {
                 endDate: endDateObj,
                 override: override
             };
+
         } catch (error) {
-            console.error('Error syncing emails:', error);
-            throw error;
+            console.error('❌ syncEmails error:', error);
+            throw error;  // Re-throw so controller can handle it
         }
     }
 }
