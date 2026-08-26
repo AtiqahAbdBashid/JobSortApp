@@ -57,7 +57,7 @@ exports.getUser = async (req, res) => {
 };
 
 // ============================================================
-// GOOGLE OAUTH - ADD THESE
+// GOOGLE OAUTH 
 // ============================================================
 exports.googleAuth = async (req, res) => {
     try {
@@ -101,11 +101,9 @@ exports.googleCallback = async (req, res) => {
             process.env.GOOGLE_REDIRECT_URI
         );
 
-        // Get tokens
         const { tokens } = await oauth2Client.getToken(code);
         oauth2Client.setCredentials(tokens);
 
-        // Get user info
         const oauth2 = google.oauth2({
             auth: oauth2Client,
             version: 'v2'
@@ -113,7 +111,6 @@ exports.googleCallback = async (req, res) => {
 
         const userInfo = await oauth2.userinfo.get();
 
-        // Find or create user
         let user = await User.findOne({ googleId: userInfo.data.id });
 
         if (!user) {
@@ -126,31 +123,28 @@ exports.googleCallback = async (req, res) => {
                 refreshToken: tokens.refresh_token,
                 tokenExpiry: tokens.expiry_date
             });
+            await user.save();
+            console.log('New user created:', user.email);
         } else {
             user.accessToken = tokens.access_token;
             user.refreshToken = tokens.refresh_token;
             user.tokenExpiry = tokens.expiry_date;
-            user.name = userInfo.data.name;
-            user.picture = userInfo.data.picture;
+            await user.save();
+            console.log('User updated:', user.email);
         }
 
-        await user.save();
-
-        // Create JWT for our app
+        // GENERATE JWT
         const jwtToken = jwt.sign(
             { userId: user._id, email: user.email },
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
 
-        // ✅ FIX: Use FRONTEND_URL from .env
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-        console.log(`🔀 Redirecting to: ${frontendUrl}/auth-callback?token=${jwtToken}`);
-
-        res.redirect(`${frontendUrl}/auth-callback?token=${jwtToken}`);
+        // REDIRECT TO FRONTEND WITH TOKEN
+        res.redirect(`${process.env.FRONTEND_URL}/auth-callback?token=${jwtToken}`);
 
     } catch (error) {
         console.error('Google callback error:', error);
-        res.status(500).json({ error: 'Authentication failed' });
+        res.redirect(`${process.env.FRONTEND_URL}/login?error=Authentication failed`);
     }
 };

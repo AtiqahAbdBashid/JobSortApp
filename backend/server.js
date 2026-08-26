@@ -11,7 +11,7 @@ const userRoutes = require('./routes/users');
 const app = express();
 
 // ============================================================
-// ✅ FIXED CORS - Added your production domains!
+// CORS - ALLOW FRONTEND ORIGINS
 // ============================================================
 app.use(cors({
     origin: [
@@ -45,10 +45,28 @@ app.get('/api/test', (req, res) => {
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('✅ Connected to MongoDB'))
-    .catch(err => console.error('❌ MongoDB connection error:', err));
+    .then(() => console.log('Connected to MongoDB'))
+    .catch(err => console.error('MongoDB connection error:', err));
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
-    console.log(`✅ Server running on http://localhost:${PORT}`);
+    console.log(`Server running on http://localhost:${PORT}`);
+});
+
+const cron = require('node-cron');
+
+// Sync every 6 hours for all users
+cron.schedule('0 */6 * * *', async () => {
+    console.log('Auto-syncing all users...');
+    try {
+        const users = await User.find({});
+        for (const user of users) {
+            if (user.accessToken) {
+                await gmailService.syncEmails(user._id);
+                console.log(`Synced for: ${user.email}`);
+            }
+        }
+    } catch (error) {
+        console.error('Auto-sync error:', error);
+    }
 });

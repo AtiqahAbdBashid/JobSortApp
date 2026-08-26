@@ -280,23 +280,42 @@ exports.syncGmail = async (req, res) => {
         const userId = req.userId;
         const { startDate } = req.body;
 
-        console.log(`🔄 Syncing Gmail for user: ${userId}`);
-        console.log(`📅 Start date: ${startDate || '30 days ago'}`);
+        console.log(`Syncing Gmail for user: ${userId}`);
+        console.log(`Start date: ${startDate || '30 days ago'}`);
 
-        // Call the Gmail service
+        const User = require('../models/User');
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        if (!user.accessToken) {
+            return res.status(400).json({
+                success: false,
+                message: 'User does not have Gmail access. Please login with Google again.'
+            });
+        }
+
+        // CALL THE GMAIL SERVICE
         const result = await gmailService.syncEmails(userId, startDate);
 
-        console.log(`✅ Gmail sync completed:`, result);
+        console.log(`Gmail sync completed:`, result);
 
         res.json({
             success: true,
             message: result.message || 'Gmail sync completed',
             synced: result.synced || 0,
+            updated: result.updated || 0,
             total: result.total || 0,
             startDate: result.startDate || null
         });
+
     } catch (error) {
-        console.error('❌ Gmail sync error:', error);
+        console.error('Gmail sync error:', error);
 
         res.status(500).json({
             success: false,

@@ -29,6 +29,8 @@ const AuthCallback = () => {
 
         if (token) {
             localStorage.setItem('token', token);
+
+            // Step 1: Get user info
             fetch('https://jobsort-backend.onrender.com/api/auth/me', {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -37,10 +39,29 @@ const AuthCallback = () => {
                 .then(res => res.json())
                 .then(user => {
                     localStorage.setItem('user', JSON.stringify(user));
+
+                    // Step 2: Auto-sync Gmail after login
+                    console.log('🔄 Auto-syncing Gmail...');
+                    return fetch('https://jobsort-backend.onrender.com/api/applications/sync-gmail', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            startDate: user.preferences?.syncStartDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                        })
+                    });
+                })
+                .then(res => res.json())
+                .then(data => {
+                    console.log('Auto-sync completed:', data);
                     navigate('/dashboard');
                 })
-                .catch(() => {
-                    navigate('/login');
+                .catch((err) => {
+                    console.error('Error during auto-sync:', err);
+                    // Still navigate to dashboard even if sync fails
+                    navigate('/dashboard');
                 });
         } else {
             navigate('/login');
