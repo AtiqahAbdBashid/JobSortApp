@@ -29,6 +29,19 @@ Answer YES only if the email is about an actual job application submitted by the
 Answer NO if the email is simply advertising, recommending, or notifying the user about a job opportunity that they have NOT applied for.
 
 YES — JOB APPLICATION EMAILS:
+- your application was sent to
+- Application submitted
+- Application received
+- Application confirmation
+- Application acknowledgment
+- Application follow-up
+- Application status update
+- Application outcome
+- Interview invitation for a position the user applied for
+- Assessment/test invitation related to an application
+- Request for additional information/documents for an application
+- Rejection of an application
+- Job offer resulting from an application
 - Confirmation that an application was received
 - Confirmation that an application was submitted
 - "Thank you for applying"
@@ -87,7 +100,7 @@ Do NOT classify an email as YES merely because it mentions:
 - "application" when it refers to something other than a submitted job application
 
 If the email is ambiguous and there is NO clear indication that the user submitted an application, answer NO.
-An email from myfuturejobs.com is likely a job alert, not an application confirmation.
+An email from myfuturejobs.com is very likely a job alert, not an application confirmation.
 
 Return ONLY "YES" or "NO".
 

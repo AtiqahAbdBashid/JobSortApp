@@ -272,20 +272,34 @@ exports.getStats = async (req, res) => {
     }
 };
 
+
+
 // ============================================================
 // SYNC GMAIL
 // ============================================================
 exports.syncGmail = async (req, res) => {
     try {
         const userId = req.userId;
-
-        // ✅ FIRST: Get all variables from req.body
         const { startDate, endDate, override } = req.body;
 
         console.log(`🔄 Syncing Gmail for user: ${userId}`);
         console.log(`📅 Start date: ${startDate || '30 days ago'}`);
         console.log(`📅 End date: ${endDate || 'today'}`);
         console.log(`🔄 Override: ${override || false}`);
+
+        // ✅ Validate dates
+        if (startDate && isNaN(new Date(startDate).getTime())) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid start date format'
+            });
+        }
+        if (endDate && isNaN(new Date(endDate).getTime())) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid end date format'
+            });
+        }
 
         const User = require('../models/User');
         const user = await User.findById(userId);
@@ -304,10 +318,19 @@ exports.syncGmail = async (req, res) => {
             });
         }
 
-        // ✅ SECOND: Call gmailService with ALL variables
-        const result = await gmailService.syncEmails(userId, startDate, endDate, override);
+        // ✅ Try-catch around gmailService call
+        let result;
+        try {
+            result = await gmailService.syncEmails(userId, startDate, endDate, override);
+        } catch (serviceError) {
+            console.error('gmailService error:', serviceError);
+            return res.status(500).json({
+                success: false,
+                message: 'Gmail service error: ' + serviceError.message
+            });
+        }
 
-        console.log(`✅ Gmail sync completed:`, result);
+        console.log(`Gmail sync completed:`, result);
 
         res.json({
             success: true,
@@ -326,10 +349,12 @@ exports.syncGmail = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to sync Gmail',
-            error: error.message
+            error: error.message,
+            stack: error.stack  // ← Helps with debugging
         });
     }
 };
+
 // ============================================================
 // BULK UPDATE STATUS
 // ============================================================
