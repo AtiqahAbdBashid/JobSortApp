@@ -29,7 +29,7 @@ const AuthCallback = () => {
 
         if (token) {
             localStorage.setItem('token', token);
-            fetch('http://localhost:5001/api/auth/me', {
+            fetch('https://jobsort-backend.onrender.com/api/auth/me', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
