@@ -28,6 +28,8 @@ import {
     Alert,
     Tooltip,
     Checkbox,
+    Switch,
+    FormControlLabel,
 } from '@mui/material';
 
 import {
@@ -78,6 +80,8 @@ const ApplicationGrid = ({ darkMode }) => {
         useState(null);
 
     const [saving, setSaving] = useState(false);
+
+    const [overrideSync, setOverrideSync] = useState(false);
 
     // Delete confirmation
     const [deleteDialogOpen, setDeleteDialogOpen] =
@@ -232,18 +236,8 @@ const ApplicationGrid = ({ darkMode }) => {
             alert('Please select a start date');
             return;
         }
-        if (!syncEndDate) {
-            alert('Please select an end date');
-            return;
-        }
 
-        // Validate that start date is before end date
-        if (new Date(syncStartDate) > new Date(syncEndDate)) {
-            alert('Start date must be before end date');
-            return;
-        }
-
-        // Show progress dialog with initial message
+        // Show progress dialog
         setSyncProgress({
             isSyncing: true,
             currentStep: 'Connecting to Gmail...',
@@ -256,18 +250,14 @@ const ApplicationGrid = ({ darkMode }) => {
         setSyncing(true);
         setShowSyncDialog(false);
 
-        // Simulate progress updates (slow and steady)
         let progressValue = 0;
         let messageIndex = 0;
         let lastMessageChange = Date.now();
 
-        // Function to update progress
         const updateProgress = () => {
-            // Slow progress: 1-2% per update
             const increment = Math.random() * 2 + 1;
             progressValue = Math.min(progressValue + increment, 90);
 
-            // Update message every 3 seconds
             const now = Date.now();
             if (now - lastMessageChange > 3000) {
                 messageIndex = (messageIndex + 1) % calmingMessages.length;
@@ -289,32 +279,35 @@ const ApplicationGrid = ({ darkMode }) => {
             }
         };
 
-        // Update every 800ms (smooth progress)
         const progressInterval = setInterval(updateProgress, 800);
 
         try {
-            // SEND BOTH START AND END DATE
+            // Send the override flag to backend
             const response = await api.post('/applications/sync-gmail', {
                 startDate: syncStartDate,
-                endDate: syncEndDate
+                endDate: syncEndDate,
+                override: overrideSync
             });
 
             clearInterval(progressInterval);
 
-            // Show completion
             setSyncProgress({
                 isSyncing: true,
                 currentStep: 'Sync Complete!',
                 processed: 100,
                 total: 100,
                 currentEmail: '',
-                message: `Synced ${response.data.synced || 0} new applications, updated ${response.data.updated || 0} existing`
+                message: overrideSync
+                    ? `Replaced all data with ${response.data.synced || 0} new applications`
+                    : `Synced ${response.data.synced || 0} new applications, updated ${response.data.updated || 0} existing`
             });
 
-            // Wait 2 seconds then close
             setTimeout(() => {
                 setSyncProgress({ isSyncing: false, currentStep: '', processed: 0, total: 0, currentEmail: '', message: '' });
-                alert(`Synced ${response.data.synced || 0} new applications from ${new Date(syncStartDate).toLocaleDateString()} to ${new Date(syncEndDate).toLocaleDateString()}`);
+                alert(overrideSync
+                    ? `Replaced all data with ${response.data.synced || 0} applications from ${new Date(syncStartDate).toLocaleDateString()}`
+                    : `Synced ${response.data.synced || 0} new applications from ${new Date(syncStartDate).toLocaleDateString()}`
+                );
                 fetchApplications();
             }, 2000);
 
@@ -332,7 +325,6 @@ const ApplicationGrid = ({ darkMode }) => {
             alert('Failed to sync emails. Make sure Gmail is connected.');
         } finally {
             setSyncing(false);
-            // Close dialog after 3 seconds if still open
             setTimeout(() => {
                 setSyncProgress({ isSyncing: false, currentStep: '', processed: 0, total: 0, currentEmail: '', message: '' });
             }, 3000);
@@ -2132,9 +2124,39 @@ const ApplicationGrid = ({ darkMode }) => {
                     <Typography variant="body2" sx={{ mb: 3, color: darkMode ? '#aaa' : '#666' }}>
                         Import job applications from your Gmail. Select the date range you want to track.
                     </Typography>
+                    {/* Sync Options */}
+                    <Box sx={{ mb: 2 }}>
+                        <FormControlLabel
+                            control={
+                                <Switch
+                                    checked={overrideSync}
+                                    onChange={(e) => setOverrideSync(e.target.checked)}
+                                    sx={{
+                                        '& .MuiSwitch-switchBase.Mui-checked': { color: '#0A84FF' },
+                                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: '#0A84FF' },
+                                    }}
+                                />
+                            }
+                            label={
+                                <Box>
+                                    <Typography variant="body2" sx={{ color: darkMode ? '#F5F5F7' : '#1C1C1E', fontWeight: 500 }}>
+                                        Override existing data
+                                    </Typography>
+                                    <Typography variant="caption" sx={{ color: darkMode ? '#98989D' : '#6E6E73' }}>
+                                        {overrideSync
+                                            ? 'All existing applications will be DELETED and replaced with fresh data'
+                                            : 'New applications will be added, existing ones will be updated'}
+                                    </Typography>
+                                </Box>
+                            }
+                            sx={{ alignItems: 'flex-start', gap: 2 }}
+                        />
+                    </Box>
 
                     <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                         <Box sx={{ flex: 1, minWidth: 120 }}>
+
+
                             <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
                                 Start Date
                             </Typography>

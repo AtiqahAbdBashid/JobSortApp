@@ -278,10 +278,11 @@ exports.getStats = async (req, res) => {
 exports.syncGmail = async (req, res) => {
     try {
         const userId = req.userId;
-        const { startDate, endDate } = req.body;
+        const { startDate, override } = req.body;  // ← Get override flag
 
         console.log(`Syncing Gmail for user: ${userId}`);
-        console.log(`Date range: ${startDate || '30 days ago'} to ${endDate || 'today'}`);
+        console.log(`Start date: ${startDate || '30 days ago'}`);
+        console.log(`Override: ${override || false}`);
 
         const User = require('../models/User');
         const user = await User.findById(userId);
@@ -300,10 +301,10 @@ exports.syncGmail = async (req, res) => {
             });
         }
 
-        // CALL THE GMAIL SERVICE
-        const result = await gmailService.syncEmails(userId, startDate, endDate);
+        // ✅ Pass the override flag to gmailService
+        const result = await gmailService.syncEmails(userId, startDate, override);
 
-        console.log(`Gmail sync completed:`, result);
+        console.log(`✅ Gmail sync completed:`, result);
 
         res.json({
             success: true,
@@ -311,11 +312,12 @@ exports.syncGmail = async (req, res) => {
             synced: result.synced || 0,
             updated: result.updated || 0,
             total: result.total || 0,
-            startDate: result.startDate || null
+            startDate: result.startDate || null,
+            override: result.override || false
         });
 
     } catch (error) {
-        console.error('Gmail sync error:', error);
+        console.error('❌ Gmail sync error:', error);
 
         res.status(500).json({
             success: false,

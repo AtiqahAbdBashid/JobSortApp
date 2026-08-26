@@ -243,9 +243,9 @@ class GmailService {
     }
 
     // ============================================================
-    // SYNC GMAIL - WITH ENHANCED TRACKING AND DATE RANGE
+    // SYNC GMAIL - WITH ENHANCED TRACKING, DATE RANGE, AND OVERRIDE
     // ============================================================
-    async syncEmails(userId, startDate = null, endDate = null) {
+    async syncEmails(userId, startDate = null, endDate = null, override = false) {
         try {
             const user = await User.findById(userId);
             if (!user) throw new Error('User not found');
@@ -253,12 +253,19 @@ class GmailService {
             console.log(`\n👤 Syncing Gmail for: ${user.email}`);
             console.log(`Has access token: ${!!user.accessToken}`);
             console.log(`Has refresh token: ${!!user.refreshToken}`);
+            console.log(`🔄 Override mode: ${override}`);
 
             // Set default dates
             const startDateObj = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
             const endDateObj = endDate ? new Date(endDate) : new Date();
 
             console.log(`Syncing emails from ${startDateObj.toISOString().split('T')[0]} to ${endDateObj.toISOString().split('T')[0]}`);
+
+            // ✅ If override is true, DELETE ALL existing applications for this user
+            if (override) {
+                const deleted = await Application.deleteMany({ userId });
+                console.log(`🗑️ Deleted ${deleted.deletedCount} existing applications`);
+            }
 
             const emails = await this.fetchJobApplications(user, startDateObj, endDateObj);
 
@@ -267,12 +274,15 @@ class GmailService {
             let followUpsProcessed = 0;
 
             for (const email of emails) {
-                // Check if application already exists
-                let existing = await Application.findOne({
-                    userId,
-                    company: email.company,
-                    position: email.position
-                });
+                // Check if application already exists (only if NOT overriding)
+                let existing = null;
+                if (!override) {
+                    existing = await Application.findOne({
+                        userId,
+                        company: email.company,
+                        position: email.position
+                    });
+                }
 
                 if (existing) {
                     // ============================================================
@@ -361,13 +371,16 @@ class GmailService {
 
             return {
                 success: true,
-                message: `Synced ${synced} new applications, updated ${updated} existing, ${followUpsProcessed} follow-ups processed`,
+                message: override
+                    ? `Replaced all data with ${synced} new applications`
+                    : `Synced ${synced} new applications, updated ${updated} existing, ${followUpsProcessed} follow-ups processed`,
                 synced,
                 updated,
                 followUpsProcessed,
                 total: emails.length,
                 startDate: startDateObj,
-                endDate: endDateObj
+                endDate: endDateObj,
+                override: override
             };
         } catch (error) {
             console.error('Error syncing emails:', error);
