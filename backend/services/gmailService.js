@@ -253,8 +253,7 @@ class GmailService {
             console.log(`\n👤 Syncing Gmail for: ${user.email}`);
             console.log(`Has access token: ${!!user.accessToken}`);
             console.log(`Has refresh token: ${!!user.refreshToken}`);
-            console.log(`🔄 Override mode: ${override}`);
-
+            onsole.log(`🔄 Override flag received: ${override}`);
             // Set default dates
             const startDateObj = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
             const endDateObj = endDate ? new Date(endDate) : new Date();

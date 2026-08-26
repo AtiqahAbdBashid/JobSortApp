@@ -278,11 +278,14 @@ exports.getStats = async (req, res) => {
 exports.syncGmail = async (req, res) => {
     try {
         const userId = req.userId;
-        const { startDate, override } = req.body;  // ← Get override flag
 
-        console.log(`Syncing Gmail for user: ${userId}`);
-        console.log(`Start date: ${startDate || '30 days ago'}`);
-        console.log(`Override: ${override || false}`);
+        // ✅ FIRST: Get all variables from req.body
+        const { startDate, endDate, override } = req.body;
+
+        console.log(`🔄 Syncing Gmail for user: ${userId}`);
+        console.log(`📅 Start date: ${startDate || '30 days ago'}`);
+        console.log(`📅 End date: ${endDate || 'today'}`);
+        console.log(`🔄 Override: ${override || false}`);
 
         const User = require('../models/User');
         const user = await User.findById(userId);
@@ -301,8 +304,8 @@ exports.syncGmail = async (req, res) => {
             });
         }
 
-        // ✅ Pass the override flag to gmailService
-        const result = await gmailService.syncEmails(userId, startDate, override);
+        // ✅ SECOND: Call gmailService with ALL variables
+        const result = await gmailService.syncEmails(userId, startDate, endDate, override);
 
         console.log(`✅ Gmail sync completed:`, result);
 
@@ -313,6 +316,7 @@ exports.syncGmail = async (req, res) => {
             updated: result.updated || 0,
             total: result.total || 0,
             startDate: result.startDate || null,
+            endDate: result.endDate || null,
             override: result.override || false
         });
 
@@ -326,7 +330,6 @@ exports.syncGmail = async (req, res) => {
         });
     }
 };
-
 // ============================================================
 // BULK UPDATE STATUS
 // ============================================================
