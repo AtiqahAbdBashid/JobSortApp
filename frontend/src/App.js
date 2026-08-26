@@ -27,7 +27,6 @@ import TermsOfService from './pages/TermsOfService';
 // ============================================================
 const AuthCallback = () => {
     const navigate = useNavigate();
-    const [syncMessage, setSyncMessage] = useState('Loading your dashboard...');
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -35,7 +34,6 @@ const AuthCallback = () => {
 
         if (token) {
             localStorage.setItem('token', token);
-            setSyncMessage('Verifying your account...');
 
             fetch('https://jobsort-backend.onrender.com/api/auth/me', {
                 headers: {
@@ -48,29 +46,13 @@ const AuthCallback = () => {
                 })
                 .then(user => {
                     localStorage.setItem('user', JSON.stringify(user));
-                    setSyncMessage('Syncing your Gmail...');
-
-                    return fetch('https://jobsort-backend.onrender.com/api/applications/sync-gmail', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            startDate: user.preferences?.syncStartDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-                        })
-                    });
-                })
-                .then(res => res.json())
-                .then(data => {
-                    console.log('Auto-sync completed:', data);
-                    setSyncMessage('Almost ready...');
-                    setTimeout(() => navigate('/dashboard'), 500);
+                    // ✅ INSTANT REDIRECT - NO AUTO-SYNC!
+                    navigate('/dashboard');
                 })
                 .catch((err) => {
-                    console.error('Error:', err);
-                    setSyncMessage('Something went wrong, redirecting...');
-                    setTimeout(() => navigate('/dashboard'), 1000);
+                    console.error('❌ Error:', err);
+                    // Still redirect to dashboard even if user fetch fails
+                    navigate('/dashboard');
                 });
         } else {
             navigate('/login');
@@ -88,31 +70,21 @@ const AuthCallback = () => {
             p: 3,
         }}>
             <Box sx={{ textAlign: 'center' }}>
-                {/* Logo */}
                 <Box
                     component="img"
                     src="/logo.png"
                     alt="JobSort"
                     sx={{
-                        width: 80,
-                        height: 80,
-                        borderRadius: '16px',
-                        mb: 3,
+                        width: 60,
+                        height: 60,
+                        borderRadius: '12px',
+                        mb: 2,
                         objectFit: 'contain',
                     }}
                 />
-
-                {/* Title */}
-                <Typography variant="h4" sx={{ color: '#F5F5F7', fontWeight: 700, mb: 2 }}>
-                    JobSort
-                </Typography>
-
-                {/* Loading Spinner */}
-                <CircularProgress size={40} sx={{ color: '#0A84FF', mb: 2 }} />
-
-                {/* Status Messages */}
+                <CircularProgress size={30} sx={{ color: '#0A84FF', mb: 1 }} />
                 <Typography variant="body2" sx={{ color: '#98989D' }}>
-                    {syncMessage}
+                    Logging in...
                 </Typography>
             </Box>
         </Box>
