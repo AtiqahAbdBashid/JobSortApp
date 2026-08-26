@@ -119,39 +119,99 @@ const Layout = ({ children, darkMode, toggleDarkMode }) => {
 
             {/* Main Content */}
             <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+
                 {/* Desktop Sidebar */}
                 {!isMobile && (
-                    <Box sx={{ width: 220, minWidth: 220, bgcolor: darkMode ? '#242426' : '#EBEBED', borderRight: `1px solid ${darkMode ? '#3A3A3C' : '#D1D1D6'}`, px: 1.5, py: 1.5 }}>
+                    <Box
+                        sx={{
+                            width: 220,
+                            minWidth: 220,
+                            bgcolor: darkMode ? '#242426' : '#EBEBED',
+                            borderRight: `1px solid ${darkMode ? '#3A3A3C' : '#D1D1D6'}`,
+                            px: 1.5,
+                            py: 1.5,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            height: '100%',
+                        }}
+                    >
                         {/* Logo */}
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, px: 1, py: 1.5, mb: 1.5 }}>
                             <Box component="img" src="/logo.png" alt="JobSort" sx={{ width: 34, height: 34, borderRadius: '9px', objectFit: 'contain' }} />
                             <Box>
-                                <Typography sx={{ fontSize: 14, fontWeight: 650, color: darkMode ? '#F5F5F7' : '#1C1C1E' }}>JobSort</Typography>
-                                <Typography sx={{ fontSize: 11, color: darkMode ? '#98989D' : '#6E6E73' }}>Career dashboard</Typography>
+                                <Typography sx={{ fontSize: 14, fontWeight: 650, color: darkMode ? '#F5F5F7' : '#1C1C1E' }}>
+                                    JobSort
+                                </Typography>
+                                <Typography sx={{ fontSize: 11, color: darkMode ? '#98989D' : '#6E6E73' }}>
+                                    Career dashboard
+                                </Typography>
                             </Box>
                         </Box>
-                        {/* Navigation */}
+
+                        {/* Navigation - NO SETTINGS HERE */}
                         <Typography sx={{ px: 1, mb: 0.75, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: darkMode ? '#98989D' : '#6E6E73' }}>
                             Workspace
                         </Typography>
-                        {navigation.map((item) => (
-                            <Box key={item.path} onClick={() => navigate(item.path)} sx={{
-                                display: 'flex', alignItems: 'center', gap: 1.25, px: 1.25, py: 1, borderRadius: '8px',
-                                cursor: 'pointer', color: isActive(item.path) ? '#0A84FF' : (darkMode ? '#98989D' : '#6E6E73'),
-                                bgcolor: isActive(item.path) ? (darkMode ? 'rgba(10, 132, 255, 0.14)' : 'rgba(10, 132, 255, 0.10)') : 'transparent',
-                                '&:hover': { bgcolor: isActive(item.path) ? undefined : (darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'), color: isActive(item.path) ? '#0A84FF' : (darkMode ? '#F5F5F7' : '#1C1C1E') }
-                            }}>
-                                {React.cloneElement(item.icon, { sx: { fontSize: 20 } })}
-                                <Typography sx={{ fontSize: 13, fontWeight: isActive(item.path) ? 600 : 500 }}>{item.label}</Typography>
-                            </Box>
-                        ))}
+
+                        {navigation
+                            .filter(item => item.label !== 'Settings') // ← Hide Settings from main nav
+                            .map((item) => (
+                                <Box
+                                    key={item.path}
+                                    onClick={() => navigate(item.path)}
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1.25,
+                                        px: 1.25,
+                                        py: 1,
+                                        borderRadius: '8px',
+                                        cursor: 'pointer',
+                                        color: isActive(item.path) ? '#0A84FF' : darkMode ? '#98989D' : '#6E6E73',
+                                        bgcolor: isActive(item.path) ? (darkMode ? 'rgba(10, 132, 255, 0.14)' : 'rgba(10, 132, 255, 0.10)') : 'transparent',
+                                        '&:hover': {
+                                            bgcolor: isActive(item.path)
+                                                ? undefined
+                                                : darkMode
+                                                    ? 'rgba(255,255,255,0.06)'
+                                                    : 'rgba(0,0,0,0.05)',
+                                            color: isActive(item.path) ? '#0A84FF' : darkMode ? '#F5F5F7' : '#1C1C1E',
+                                        },
+                                    }}
+                                >
+                                    {React.cloneElement(item.icon, { sx: { fontSize: 20 } })}
+                                    <Typography sx={{ fontSize: 13, fontWeight: isActive(item.path) ? 600 : 500 }}>
+                                        {item.label}
+                                    </Typography>
+                                </Box>
+                            ))}
+
+                        {/* ✅ Settings — ONLY HERE, AT THE BOTTOM */}
                         <Box sx={{ mt: 'auto' }}>
-                            <Box onClick={() => navigate('/settings')} sx={{ display: 'flex', alignItems: 'center', gap: 1.25, px: 1.25, py: 1, borderRadius: '8px', cursor: 'pointer', color: isActive('/settings') ? '#0A84FF' : (darkMode ? '#98989D' : '#6E6E73'), '&:hover': { color: darkMode ? '#F5F5F7' : '#1C1C1E', bgcolor: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' } }}>
-                                <Settings sx={{ fontSize: 20 }} /><Typography sx={{ fontSize: 13, fontWeight: 500 }}>Settings</Typography>
+                            <Box
+                                onClick={() => navigate('/settings')}
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1.25,
+                                    px: 1.25,
+                                    py: 1,
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    color: isActive('/settings') ? '#0A84FF' : darkMode ? '#98989D' : '#6E6E73',
+                                    '&:hover': {
+                                        color: darkMode ? '#F5F5F7' : '#1C1C1E',
+                                        bgcolor: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+                                    },
+                                }}
+                            >
+                                <Settings sx={{ fontSize: 20 }} />
+                                <Typography sx={{ fontSize: 13, fontWeight: 500 }}>Settings</Typography>
                             </Box>
                         </Box>
                     </Box>
                 )}
+
                 <Box sx={{ flex: 1, minWidth: 0, minHeight: 0, overflow: 'auto', backgroundColor: darkMode ? '#1C1C1E' : '#F5F5F7', p: { xs: 2, md: 3 } }}>
                     {children}
                 </Box>
