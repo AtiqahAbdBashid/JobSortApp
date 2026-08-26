@@ -278,10 +278,10 @@ exports.getStats = async (req, res) => {
 exports.syncGmail = async (req, res) => {
     try {
         const userId = req.userId;
-        const { startDate } = req.body;
+        const { startDate, endDate } = req.body;
 
         console.log(`Syncing Gmail for user: ${userId}`);
-        console.log(`Start date: ${startDate || '30 days ago'}`);
+        console.log(`Date range: ${startDate || '30 days ago'} to ${endDate || 'today'}`);
 
         const User = require('../models/User');
         const user = await User.findById(userId);
@@ -301,7 +301,7 @@ exports.syncGmail = async (req, res) => {
         }
 
         // CALL THE GMAIL SERVICE
-        const result = await gmailService.syncEmails(userId, startDate);
+        const result = await gmailService.syncEmails(userId, startDate, endDate);
 
         console.log(`Gmail sync completed:`, result);
 

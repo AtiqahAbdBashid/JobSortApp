@@ -40,16 +40,23 @@ class GmailService {
     // ============================================================
     // FETCH JOB APPLICATIONS FROM GMAIL - WITH AI
     // ============================================================
-    async fetchJobApplications(user, startDate = null, maxResults = 50) {
+    async fetchJobApplications(user, startDate = null, endDate = null, maxResults = 50) {
         try {
             const auth = await this.getGmailClient(user);
             const gmail = google.gmail({ version: 'v1', auth });
 
+            // Build date filter
             let dateFilter = '';
             if (startDate) {
-                const formattedDate = new Date(startDate).toISOString().split('T')[0];
-                dateFilter = `after:${formattedDate}`;
+                const formattedStart = new Date(startDate).toISOString().split('T')[0];
+                dateFilter = `after:${formattedStart}`;
             }
+            if (endDate) {
+                const formattedEnd = new Date(endDate).toISOString().split('T')[0];
+                dateFilter += ` before:${formattedEnd}`;
+            }
+
+            console.log(`Date filter: ${dateFilter || 'No date filter'}`);
 
             const queries = [
                 `"job application" ${dateFilter}`,
@@ -114,7 +121,7 @@ class GmailService {
                 new Map(allMessages.map(msg => [msg.id, msg])).values()
             );
 
-            console.log(`📊 Found ${uniqueMessages.length} unique messages`);
+            console.log(`Found ${uniqueMessages.length} unique messages`);
 
             const applications = [];
             let nonAppCount = 0;
@@ -135,7 +142,7 @@ class GmailService {
                         continue;
                     }
 
-                    console.log(`\n📧 Processing: "${parsedData.subject}"`);
+                    console.log(`\nProcessing: "${parsedData.subject}"`);
 
                     // =========================================================
                     // 🚀 USE AI TO CHECK AND EXTRACT
@@ -149,7 +156,7 @@ class GmailService {
                     // If AI says it's NOT an application, skip it
                     if (!aiResult) {
                         nonAppCount++;
-                        console.log(`⏭️ AI: Not a job application`);
+                        console.log(`AI: Not a job application`);
                         continue;
                     }
 
@@ -169,26 +176,31 @@ class GmailService {
                         threadId: msgData.data.threadId
                     };
 
-                    console.log(`✅ AI: ${emailData.company} - ${emailData.position} (${emailData.status})`);
+                    console.log(`AI: ${emailData.company} - ${emailData.position} (${emailData.status})`);
 
+                    // ✅ CHECK BOTH START AND END DATE
                     const emailDate = new Date(parsedData.date);
                     if (startDate && emailDate < new Date(startDate)) {
-                        console.log(`⏭️ Skipping - Before start date`);
+                        console.log(`Skipping - Before start date (${startDate})`);
+                        continue;
+                    }
+                    if (endDate && emailDate > new Date(endDate)) {
+                        console.log(`Skipping - After end date (${endDate})`);
                         continue;
                     }
 
                     applications.push(emailData);
 
                 } catch (error) {
-                    console.error(`❌ Error processing message:`, error);
+                    console.error(`Error processing message:`, error);
                     errorCount++;
                 }
             }
 
-            console.log(`\n📊 SUMMARY:`);
-            console.log(`   ✅ Applications found: ${applications.length}`);
-            console.log(`   ⏭️ Non-applications: ${nonAppCount}`);
-            console.log(`   ❌ Errors: ${errorCount}`);
+            console.log(`\nSUMMARY:`);
+            console.log(`   Applications found: ${applications.length}`);
+            console.log(`   Non-applications: ${nonAppCount}`);
+            console.log(`   Errors: ${errorCount}`);
 
             return applications;
         } catch (error) {
@@ -231,21 +243,24 @@ class GmailService {
     }
 
     // ============================================================
-    // SYNC GMAIL - WITH ENHANCED TRACKING
+    // SYNC GMAIL - WITH ENHANCED TRACKING AND DATE RANGE
     // ============================================================
-    async syncEmails(userId, startDate = null) {
+    async syncEmails(userId, startDate = null, endDate = null) {
         try {
             const user = await User.findById(userId);
             if (!user) throw new Error('User not found');
 
             console.log(`\n👤 Syncing Gmail for: ${user.email}`);
-            console.log(`🔑 Has access token: ${!!user.accessToken}`);
-            console.log(`🔑 Has refresh token: ${!!user.refreshToken}`);
+            console.log(`Has access token: ${!!user.accessToken}`);
+            console.log(`Has refresh token: ${!!user.refreshToken}`);
 
+            // Set default dates
             const startDateObj = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-            console.log(`📅 Syncing emails after: ${startDateObj.toISOString().split('T')[0]}`);
+            const endDateObj = endDate ? new Date(endDate) : new Date();
 
-            const emails = await this.fetchJobApplications(user, startDateObj);
+            console.log(`Syncing emails from ${startDateObj.toISOString().split('T')[0]} to ${endDateObj.toISOString().split('T')[0]}`);
+
+            const emails = await this.fetchJobApplications(user, startDateObj, endDateObj);
 
             let synced = 0;
             let updated = 0;
@@ -334,15 +349,15 @@ class GmailService {
                     await application.save();
                     synced++;
 
-                    console.log(`✅ Created: ${email.company} - ${email.position} (${email.status})`);
+                    console.log(`Created: ${email.company} - ${email.position} (${email.status})`);
                 }
             }
 
-            console.log(`\n✅ Sync complete:`);
-            console.log(`   📝 New applications: ${synced}`);
-            console.log(`   🔄 Updated applications: ${updated}`);
-            console.log(`   📧 Follow-ups processed: ${followUpsProcessed}`);
-            console.log(`   📊 Total emails: ${emails.length}`);
+            console.log(`\nSync complete:`);
+            console.log(`   New applications: ${synced}`);
+            console.log(`   Updated applications: ${updated}`);
+            console.log(`   Follow-ups processed: ${followUpsProcessed}`);
+            console.log(`   Total emails: ${emails.length}`);
 
             return {
                 success: true,
@@ -351,10 +366,11 @@ class GmailService {
                 updated,
                 followUpsProcessed,
                 total: emails.length,
-                startDate: startDateObj
+                startDate: startDateObj,
+                endDate: endDateObj
             };
         } catch (error) {
-            console.error('❌ Error syncing emails:', error);
+            console.error('Error syncing emails:', error);
             throw error;
         }
     }

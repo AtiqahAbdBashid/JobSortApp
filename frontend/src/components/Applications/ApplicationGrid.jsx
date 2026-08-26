@@ -110,6 +110,11 @@ const ApplicationGrid = ({ darkMode }) => {
         return date.toISOString().split('T')[0];
     });
 
+    const [syncEndDate, setSyncEndDate] = useState(() => {
+        const date = new Date();
+        return date.toISOString().split('T')[0];
+    });
+
     const [syncing, setSyncing] = useState(false);
 
     // =========================================================
@@ -227,6 +232,16 @@ const ApplicationGrid = ({ darkMode }) => {
             alert('Please select a start date');
             return;
         }
+        if (!syncEndDate) {
+            alert('Please select an end date');
+            return;
+        }
+
+        // Validate that start date is before end date
+        if (new Date(syncStartDate) > new Date(syncEndDate)) {
+            alert('Start date must be before end date');
+            return;
+        }
 
         // Show progress dialog with initial message
         setSyncProgress({
@@ -278,8 +293,10 @@ const ApplicationGrid = ({ darkMode }) => {
         const progressInterval = setInterval(updateProgress, 800);
 
         try {
+            // SEND BOTH START AND END DATE
             const response = await api.post('/applications/sync-gmail', {
-                startDate: syncStartDate
+                startDate: syncStartDate,
+                endDate: syncEndDate
             });
 
             clearInterval(progressInterval);
@@ -297,7 +314,7 @@ const ApplicationGrid = ({ darkMode }) => {
             // Wait 2 seconds then close
             setTimeout(() => {
                 setSyncProgress({ isSyncing: false, currentStep: '', processed: 0, total: 0, currentEmail: '', message: '' });
-                alert(`Synced ${response.data.synced || 0} new applications from ${new Date(syncStartDate).toLocaleDateString()}`);
+                alert(`Synced ${response.data.synced || 0} new applications from ${new Date(syncStartDate).toLocaleDateString()} to ${new Date(syncEndDate).toLocaleDateString()}`);
                 fetchApplications();
             }, 2000);
 
@@ -993,20 +1010,20 @@ const ApplicationGrid = ({ darkMode }) => {
     const getStatusColor = (status) => {
         switch (status) {
             case 'Applied':
-                return 'primary';      // Blue
+                return 'primary';
             case 'Screening':
-                return 'info';         // Light Blue
+                return 'info';
             case 'Interview':
             case 'Interviewing':
-                return 'warning';      // Orange/Yellow
+                return 'warning';
             case 'Offer':
-                return 'success';      // Green
+                return 'success';
             case 'Accepted':
-                return 'success';      // Green (fixed!)
+                return 'success';
             case 'Rejected':
-                return 'error';        // Red
+                return 'error';
             case 'Withdrawn':
-                return 'error';        // Red
+                return 'error';
             default:
                 return 'default';
         }
@@ -1773,9 +1790,7 @@ const ApplicationGrid = ({ darkMode }) => {
                                                     }}
                                                 >
 
-                                                    {/* =========================================================
-            ROW 1: TIMELINE (Separated, on top)
-        ========================================================= */}
+                                                    {/* ROW 1: TIMELINE (Separated, on top) */}
 
                                                     <Tooltip title="View Timeline">
                                                         <IconButton
@@ -1794,9 +1809,7 @@ const ApplicationGrid = ({ darkMode }) => {
                                                     </Tooltip>
 
 
-                                                    {/* =========================================================
-            ROW 2: EDIT & DELETE (Grouped together)
-        ========================================================= */}
+                                                    {/* ROW 2: EDIT & DELETE (Grouped together) */}
 
                                                     <Box
                                                         sx={{
@@ -2117,36 +2130,57 @@ const ApplicationGrid = ({ darkMode }) => {
 
                 <DialogContent>
                     <Typography variant="body2" sx={{ mb: 3, color: darkMode ? '#aaa' : '#666' }}>
-                        Import job applications from your Gmail. Only emails after the selected date will be imported.
+                        Import job applications from your Gmail. Select the date range you want to track.
                     </Typography>
 
-                    <Box sx={{ mb: 2 }}>
-                        <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-                            Start Date
-                        </Typography>
-                        <TextField
-                            fullWidth
-                            type="date"
-                            value={syncStartDate}
-                            onChange={(e) => setSyncStartDate(e.target.value)}
-                            InputLabelProps={{ shrink: true }}
-                            sx={{
-                                '& .MuiOutlinedInput-root': {
-                                    bgcolor: darkMode ? '#1a1a1a' : '#f5f5f5'
-                                }
-                            }}
-                        />
-                        <Typography variant="caption" sx={{ display: 'block', mt: 1, color: darkMode ? '#888' : '#999' }}>
-                            Select the date you started your job search
-                        </Typography>
+                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                        <Box sx={{ flex: 1, minWidth: 120 }}>
+                            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                                Start Date
+                            </Typography>
+                            <TextField
+                                fullWidth
+                                type="date"
+                                value={syncStartDate}
+                                onChange={(e) => setSyncStartDate(e.target.value)}
+                                InputLabelProps={{ shrink: true }}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        bgcolor: darkMode ? '#1a1a1a' : '#f5f5f5'
+                                    }
+                                }}
+                            />
+                        </Box>
+
+                        <Box sx={{ flex: 1, minWidth: 120 }}>
+                            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                                End Date
+                            </Typography>
+                            <TextField
+                                fullWidth
+                                type="date"
+                                value={syncEndDate}
+                                onChange={(e) => setSyncEndDate(e.target.value)}
+                                InputLabelProps={{ shrink: true }}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        bgcolor: darkMode ? '#1a1a1a' : '#f5f5f5'
+                                    }
+                                }}
+                            />
+                        </Box>
                     </Box>
+
+                    <Typography variant="caption" sx={{ display: 'block', mt: 2, color: darkMode ? '#888' : '#999' }}>
+                        💡 Select the date range of your job search
+                    </Typography>
 
                     <Box sx={{ mt: 2, p: 2, bgcolor: darkMode ? '#1a1a1a' : '#f5f5f5', borderRadius: '8px' }}>
                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
                             What will happen:
                         </Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                            • Scan your Gmail for job application emails
+                            • Scan your Gmail for job application emails between {syncStartDate} and {syncEndDate}
                             <br />
                             • Extract company name, position, and status
                             <br />
@@ -2168,7 +2202,7 @@ const ApplicationGrid = ({ darkMode }) => {
                     <Button
                         variant="contained"
                         onClick={handleSyncGmail}
-                        disabled={syncing || !syncStartDate}
+                        disabled={syncing || !syncStartDate || !syncEndDate}
                         sx={{
                             bgcolor: '#4CAF50',
                             textTransform: 'none',

@@ -112,7 +112,7 @@ const Dashboard = ({ darkMode }) => {
             case 'Offer':
                 return 'success';      // Green
             case 'Accepted':
-                return 'success';      // Green
+                return 'success';      // Dark Green
             case 'Rejected':
             case 'Withdrawn':
                 return 'error';        // Red
